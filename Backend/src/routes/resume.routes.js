@@ -2,6 +2,7 @@ const express = require("express");
 const upload = require("../middleware/upload.middleware");
 const extractTextFromPDF = require("../utils/pdfparsers");
 const analyzeResumeWithGroq = require("../services/groq.services");
+const fs = require("fs");
 
 const router = express.Router();
 
@@ -53,23 +54,33 @@ router.post("/analyze", upload.single("resume"), async (req, res) => {
 
     const resumeText = await extractTextFromPDF(req.file.path);
 
-    const analysis = await analyzeResumeWithGroq(
-      resumeText,
-      jobDescription
-    );
+const analysis = await analyzeResumeWithGroq(
+  resumeText,
+  jobDescription
+);
 
-    res.status(200).json({
-      success: true,
-      message: "Resume analyzed successfully",
-      fileName: req.file.originalname,
-      analysis,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Resume analysis failed",
-      error: error.message,
-    });
+// Analysis complete hone ke baad uploaded PDF delete kar rahe hain
+if (req.file && fs.existsSync(req.file.path)) {
+  fs.unlinkSync(req.file.path);
+}
+
+res.status(200).json({
+  success: true,
+  message: "Resume analyzed successfully",
+  fileName: req.file.originalname,
+  analysis,
+});
+} catch (error) {
+  // Error aane par bhi uploaded PDF delete kar rahe hain
+  if (req.file && fs.existsSync(req.file.path)) {
+    fs.unlinkSync(req.file.path);
   }
+
+  res.status(500).json({
+    success: false,
+    message: "Resume analysis failed",
+    error: error.message,
+  });
+}
 });
 module.exports = router;
