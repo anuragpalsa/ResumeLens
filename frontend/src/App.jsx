@@ -6,28 +6,48 @@ function App() {
   const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [loadingText, setLoadingText] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!resume) {
-      setError("Please upload your resume PDF.");
-      return;
-    }
+  setError("Please upload your resume PDF.");
+  return;
+}
 
-    if (!jobDescription.trim()) {
-      setError("Please paste the job description.");
-      return;
-    }
+if (resume.type !== "application/pdf") {
+  setError("Only PDF files are allowed.");
+  return;
+}
+
+if (resume.size > 2 * 1024 * 1024) {
+  setError("File size should be less than 2MB.");
+  return;
+}
+
+   if (!jobDescription.trim()) {
+  setError("Please paste the job description.");
+  return;
+}
+
+if (jobDescription.trim().length < 30) {
+  setError("Job description should be at least 30 characters.");
+  return;
+}
 
     try {
       setLoading(true);
       setError("");
       setAnalysis(null);
+      setLoadingText("Uploading resume...");
+     
 
       const formData = new FormData();
       formData.append("resume", resume);
       formData.append("jobDescription", jobDescription);
+
+       setLoadingText("Extracting resume text and analyzing with AI...");
 
       const response = await fetch("http://localhost:5000/api/resume/analyze", {
         method: "POST",
@@ -39,12 +59,13 @@ function App() {
       if (!response.ok) {
         throw new Error(data.message || "Resume analysis failed");
       }
-
+     setLoadingText("Generating ATS report...");
       setAnalysis(data.analysis);
     } catch (error) {
       setError(error.message);
     } finally {
       setLoading(false);
+      setLoadingText("");
     }
   };
 
@@ -132,7 +153,7 @@ function App() {
               disabled={loading}
               className="px-10 py-4 rounded-xl font-semibold bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 transition shadow-lg shadow-cyan-500/20 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {loading ? "Analyzing..." : "Analyze Resume with AI"}
+              {loading ? loadingText || "Analyzing..." : "Analyze Resume with AI"}
             </button>
           </div>
         </form>
