@@ -49,7 +49,7 @@ if (jobDescription.trim().length < 30) {
 
        setLoadingText("Extracting resume text and analyzing with AI...");
 
-      const response = await fetch("http://localhost:5000/api/resume/analyze", {
+      const response = await fetch("https://resumelens-backend-f5rh.onrender.com/api/resume/analyze", {
         method: "POST",
         body: formData,
       });
